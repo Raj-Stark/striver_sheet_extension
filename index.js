@@ -3,7 +3,7 @@ const puppeteer = require("puppeteer");
 const cors = require("cors");
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT | 3000;
 app.use(cors());
 
 app.get("/scrape", async (req, res) => {
@@ -61,6 +61,6 @@ app.get("/scrape", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on ${PORT}`);
 });
