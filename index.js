@@ -13,7 +13,7 @@ app.get("/scrape", async (req, res) => {
     return res.status(400).json({ error: "Missing 'q' parameter in the URL." });
   }
 
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({ headless: "new" });
   const page = await browser.newPage();
 
   try {
