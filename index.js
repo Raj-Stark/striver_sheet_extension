@@ -109,6 +109,11 @@
 const express = require("express");
 const cors = require("cors");
 const puppeteer = require("puppeteer");
+const chromium = require("@sparticuz/chromium");
+
+
+chromium.setHeadlessMode = true;
+chromium.setGraphicsMode = false;
 
 const app = express();
 const PORT = process.env.PORT | 3000;
@@ -121,37 +126,12 @@ app.get("/scrape", async (req, res) => {
     return res.status(400).json({ error: "Missing 'q' parameter in the URL." });
   }
 
-  let options = {};
-
-  // Set the executable path to the location of the -min package's Chromium files
-  options.executablePath = "/opt/chromium"; // Set the location for AWS Lambda
-
-  // Define other Puppeteer launch options
-  options.args = [
-    "--hide-scrollbars",
-    "--disable-web-security",
-    `--disable-gpu`,
-    `--font-render-hinting=none`,
-    `--disable-extensions`,
-    `--disable-background-networking`,
-    `--disable-software-rasterizer`,
-    `--disable-default-apps`,
-    `--disable-logging`,
-    `--disable-extensions`,
-    `--disable-sync`,
-    `--disable-translate`,
-    `--disable-notifications`,
-  ];
-
-  options.defaultViewport = {
-    width: 1920,
-    height: 1080,
-  };
-
-  options.headless = true;
-  options.ignoreHTTPSErrors = true;
-
-  const browser = await puppeteer.launch(options);
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+  });
   const page = await browser.newPage();
 
   try {
