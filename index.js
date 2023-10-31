@@ -1,11 +1,15 @@
 const express = require("express");
-const puppeteer = require("puppeteer");
+
 const cors = require("cors");
-const Chromium = require("chrome-aws-lambda");
+
 
 const app = express();
 const PORT = process.env.PORT | 3000;
 app.use(cors());
+
+let chrome={};
+let puppeteer;
+
 
 if(process.env.AWS_LAMBDA_FUNCTION_VERSION){
   chrome = require("chrome-aws-lambda");
@@ -19,7 +23,7 @@ app.get("/scrape", async (req, res) => {
   
 if(process.env.AWS_LAMBDA_FUNCTION_VERSION){
   options = {
-    args:[...chrome.args],
+    args:[...chrome.args , "--hide-scrollbars", "--disable-web-security"],
     defaultViewport:chrome.defaultViewport,
     executablePath:await chrome.executablePath,
     headless:true,
