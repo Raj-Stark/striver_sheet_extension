@@ -17,5 +17,8 @@
   },
   "devDependencies": {
     "puppeteer": "^21.4.1"
+  },
+  "engines": {
+    "node": "^14"
   }
 }
