@@ -2,36 +2,32 @@ const express = require("express");
 
 const cors = require("cors");
 
-
 const app = express();
 const PORT = process.env.PORT | 3000;
 app.use(cors());
 
-let chrome={};
+let chrome = {};
 let puppeteer;
 
-
-if(process.env.AWS_LAMBDA_FUNCTION_VERSION){
+if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
   chrome = require("chrome-aws-lambda");
   puppeteer = require("puppeteer-core");
-}else{
+} else {
   puppeteer = require("puppeteer");
 }
 
 app.get("/scrape", async (req, res) => {
- let options = {};
-  
-if(process.env.AWS_LAMBDA_FUNCTION_VERSION){
-  options = {
-    args:[...chrome.args , "--hide-scrollbars", "--disable-web-security"],
-    defaultViewport:chrome.defaultViewport,
-    executablePath:await chrome.executablePath,
-    headless:true,
-    ignoreHTTPSErrors:true,
-  }
- 
-}
+  let options = {};
 
+  if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+    options = {
+      args: [...chrome.args, "--hide-scrollbars", "--disable-web-security"],
+      defaultViewport: chrome.defaultViewport,
+      executablePath: await chrome.executablePath,
+      headless: true,
+      ignoreHTTPSErrors: true,
+    };
+  }
 
   const searchQuery = req.query.q;
 
@@ -43,19 +39,30 @@ if(process.env.AWS_LAMBDA_FUNCTION_VERSION){
   const page = await browser.newPage();
 
   try {
-    await page.goto(`https://www.youtube.com/results?search_query=${searchQuery}`);
+    await page.goto(
+      `https://www.youtube.com/results?search_query=${searchQuery}`
+    );
 
     const results = await page.evaluate(() => {
-      const videoResults = Array.from(document.querySelectorAll("ytd-video-renderer"));
+      const videoResults = Array.from(
+        document.querySelectorAll("ytd-video-renderer")
+      );
 
-      return videoResults.slice(0,5).map((videoResult) => {
+      return videoResults.slice(0, 5).map((videoResult) => {
         const thumbnailElement = videoResult.querySelector("ytd-thumbnail img");
-        const thumbnail = thumbnailElement ? thumbnailElement.getAttribute("src") : null;
+        const thumbnail = thumbnailElement
+          ? thumbnailElement.getAttribute("src")
+          : null;
         const titleElement = videoResult.querySelector("#video-title");
         const title = titleElement ? titleElement.textContent.trim() : null;
-        const channelNameElement = videoResult.querySelector("ytd-channel-name a");
-        const channelName = channelNameElement ? channelNameElement.textContent : null;
-        const videoLink = titleElement ? titleElement.getAttribute("href") : null;
+        const channelNameElement =
+          videoResult.querySelector("ytd-channel-name a");
+        const channelName = channelNameElement
+          ? channelNameElement.textContent
+          : null;
+        const videoLink = titleElement
+          ? titleElement.getAttribute("href")
+          : null;
 
         return { thumbnail, title, channelName, videoLink };
       });
@@ -66,11 +73,15 @@ if(process.env.AWS_LAMBDA_FUNCTION_VERSION){
 
     for (const item of nullResults) {
       const newPage = await browser.newPage();
-      await newPage.goto(`https://www.youtube.com/results?search_query=${item.title}`);
+      await newPage.goto(
+        `https://www.youtube.com/results?search_query=${item.title}`
+      );
       const newResult = await newPage.evaluate(() => {
         const videoResult = document.querySelector("ytd-video-renderer");
         const thumbnailElement = videoResult.querySelector("ytd-thumbnail img");
-        const thumbnail = thumbnailElement ? thumbnailElement.getAttribute("src") : null;
+        const thumbnail = thumbnailElement
+          ? thumbnailElement.getAttribute("src")
+          : null;
         return { thumbnail };
       });
       item.thumbnail = newResult.thumbnail;
@@ -88,5 +99,5 @@ if(process.env.AWS_LAMBDA_FUNCTION_VERSION){
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on ${PORT}`);
+  console.log(`Raj Server is running on ${PORT}`);
 });
