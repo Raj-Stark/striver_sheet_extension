@@ -1,68 +1,173 @@
-const express = require("express");
+// const express = require("express");
 
+// const cors = require("cors");
+
+// const app = express();
+// const PORT = process.env.PORT | 3000;
+// app.use(cors());
+
+// let chrome = {};
+// let puppeteer;
+
+// if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+//   chrome = require("chrome-aws-lambda");
+//   puppeteer = require("puppeteer-core");
+// } else {
+//   puppeteer = require("puppeteer");
+// }
+
+// app.get("/scrape", async (req, res) => {
+//   let options = {};
+
+//   if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+//     options = {
+//       args: [...chrome.args, "--hide-scrollbars", "--disable-web-security"],
+//       defaultViewport: chrome.defaultViewport,
+//       executablePath: await chrome.executablePath,
+//       headless: true,
+//       ignoreHTTPSErrors: true,
+//     };
+//   }
+
+//   const searchQuery = req.query.q;
+
+//   if (!searchQuery) {
+//     return res.status(400).json({ error: "Missing 'q' parameter in the URL." });
+//   }
+
+//   const browser = await puppeteer.launch(options);
+//   const page = await browser.newPage();
+
+//   try {
+//     await page.goto(
+//       `https://www.youtube.com/results?search_query=${searchQuery}`
+//     );
+
+//     const results = await page.evaluate(() => {
+//       const videoResults = Array.from(
+//         document.querySelectorAll("ytd-video-renderer")
+//       );
+
+//       return videoResults.slice(0, 5).map((videoResult) => {
+//         const thumbnailElement = videoResult.querySelector("ytd-thumbnail img");
+//         const thumbnail = thumbnailElement
+//           ? thumbnailElement.getAttribute("src")
+//           : null;
+//         const titleElement = videoResult.querySelector("#video-title");
+//         const title = titleElement ? titleElement.textContent.trim() : null;
+//         const channelNameElement =
+//           videoResult.querySelector("ytd-channel-name a");
+//         const channelName = channelNameElement
+//           ? channelNameElement.textContent
+//           : null;
+//         const videoLink = titleElement
+//           ? titleElement.getAttribute("href")
+//           : null;
+
+//         return { thumbnail, title, channelName, videoLink };
+//       });
+//     });
+
+//     const filteredResults = results.filter((item) => item.thumbnail !== null);
+//     const nullResults = results.filter((item) => item.thumbnail === null);
+
+//     for (const item of nullResults) {
+//       const newPage = await browser.newPage();
+//       await newPage.goto(
+//         `https://www.youtube.com/results?search_query=${item.title}`
+//       );
+//       const newResult = await newPage.evaluate(() => {
+//         const videoResult = document.querySelector("ytd-video-renderer");
+//         const thumbnailElement = videoResult.querySelector("ytd-thumbnail img");
+//         const thumbnail = thumbnailElement
+//           ? thumbnailElement.getAttribute("src")
+//           : null;
+//         return { thumbnail };
+//       });
+//       item.thumbnail = newResult.thumbnail;
+//       await newPage.close();
+//     }
+
+//     const finalArray = [...filteredResults, ...nullResults];
+//     return res.json(finalArray);
+//   } catch (error) {
+//     console.error("Error: ", error);
+//     res.status(500).json({ error: "An error occurred while scraping data." });
+//   } finally {
+//     await browser.close();
+//   }
+// });
+
+// app.listen(PORT, () => {
+//   console.log(`Raj Server is running on ${PORT}`);
+// });
+
+
+// ! Test code 
+
+
+const express = require("express");
 const cors = require("cors");
+const puppeteer = require("puppeteer");
 
 const app = express();
 const PORT = process.env.PORT | 3000;
 app.use(cors());
 
-let chrome = {};
-let puppeteer;
-
-if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
-  chrome = require("chrome-aws-lambda");
-  puppeteer = require("puppeteer-core");
-} else {
-  puppeteer = require("puppeteer");
-}
-
 app.get("/scrape", async (req, res) => {
-  let options = {};
-
-  if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
-    options = {
-      args: [...chrome.args, "--hide-scrollbars", "--disable-web-security"],
-      defaultViewport: chrome.defaultViewport,
-      executablePath: await chrome.executablePath,
-      headless: true,
-      ignoreHTTPSErrors: true,
-    };
-  }
-
   const searchQuery = req.query.q;
 
   if (!searchQuery) {
     return res.status(400).json({ error: "Missing 'q' parameter in the URL." });
   }
 
+  let options = {};
+
+  // Set the executable path to the location of the -min package's Chromium files
+  options.executablePath = "/opt/chromium"; // Set the location for AWS Lambda
+
+  // Define other Puppeteer launch options
+  options.args = [
+    "--hide-scrollbars",
+    "--disable-web-security",
+    `--disable-gpu`,
+    `--font-render-hinting=none`,
+    `--disable-extensions`,
+    `--disable-background-networking`,
+    `--disable-software-rasterizer`,
+    `--disable-default-apps`,
+    `--disable-logging`,
+    `--disable-extensions`,
+    `--disable-sync`,
+    `--disable-translate`,
+    `--disable-notifications`,
+  ];
+
+  options.defaultViewport = {
+    width: 1920,
+    height: 1080,
+  };
+
+  options.headless = true;
+  options.ignoreHTTPSErrors = true;
+
   const browser = await puppeteer.launch(options);
   const page = await browser.newPage();
 
   try {
-    await page.goto(
-      `https://www.youtube.com/results?search_query=${searchQuery}`
-    );
+    await page.goto(`https://www.youtube.com/results?search_query=${searchQuery}`);
 
     const results = await page.evaluate(() => {
-      const videoResults = Array.from(
-        document.querySelectorAll("ytd-video-renderer")
-      );
+      const videoResults = Array.from(document.querySelectorAll("ytd-video-renderer"));
 
       return videoResults.slice(0, 5).map((videoResult) => {
         const thumbnailElement = videoResult.querySelector("ytd-thumbnail img");
-        const thumbnail = thumbnailElement
-          ? thumbnailElement.getAttribute("src")
-          : null;
+        const thumbnail = thumbnailElement ? thumbnailElement.getAttribute("src") : null;
         const titleElement = videoResult.querySelector("#video-title");
         const title = titleElement ? titleElement.textContent.trim() : null;
-        const channelNameElement =
-          videoResult.querySelector("ytd-channel-name a");
-        const channelName = channelNameElement
-          ? channelNameElement.textContent
-          : null;
-        const videoLink = titleElement
-          ? titleElement.getAttribute("href")
-          : null;
+        const channelNameElement = videoResult.querySelector("ytd-channel-name a");
+        const channelName = channelNameElement ? channelNameElement.textContent : null;
+        const videoLink = titleElement ? titleElement.getAttribute("href") : null;
 
         return { thumbnail, title, channelName, videoLink };
       });
@@ -73,15 +178,11 @@ app.get("/scrape", async (req, res) => {
 
     for (const item of nullResults) {
       const newPage = await browser.newPage();
-      await newPage.goto(
-        `https://www.youtube.com/results?search_query=${item.title}`
-      );
+      await newPage.goto(`https://www.youtube.com/results?search_query=${item.title}`);
       const newResult = await newPage.evaluate(() => {
         const videoResult = document.querySelector("ytd-video-renderer");
         const thumbnailElement = videoResult.querySelector("ytd-thumbnail img");
-        const thumbnail = thumbnailElement
-          ? thumbnailElement.getAttribute("src")
-          : null;
+        const thumbnail = thumbnailElement ? thumbnailElement.getAttribute("src") : null;
         return { thumbnail };
       });
       item.thumbnail = newResult.thumbnail;
