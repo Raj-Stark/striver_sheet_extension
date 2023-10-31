@@ -2,40 +2,20 @@
 
 // const cors = require("cors");
 
+// const puppeteer = require("puppeteer");
+
 // const app = express();
 // const PORT = process.env.PORT | 3000;
 // app.use(cors());
 
-// let chrome = {};
-// let puppeteer;
-
-// if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
-//   chrome = require("chrome-aws-lambda");
-//   puppeteer = require("puppeteer-core");
-// } else {
-//   puppeteer = require("puppeteer");
-// }
-
 // app.get("/scrape", async (req, res) => {
-//   let options = {};
-
-//   if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
-//     options = {
-//       args: [...chrome.args, "--hide-scrollbars", "--disable-web-security"],
-//       defaultViewport: chrome.defaultViewport,
-//       executablePath: await chrome.executablePath,
-//       headless: true,
-//       ignoreHTTPSErrors: true,
-//     };
-//   }
-
 //   const searchQuery = req.query.q;
 
 //   if (!searchQuery) {
 //     return res.status(400).json({ error: "Missing 'q' parameter in the URL." });
 //   }
 
-//   const browser = await puppeteer.launch(options);
+//   const browser = await puppeteer.launch();
 //   const page = await browser.newPage();
 
 //   try {
@@ -102,18 +82,15 @@
 //   console.log(`Raj Server is running on ${PORT}`);
 // });
 
-
-// ! Test code 
-
+// ! Test code
 
 const express = require("express");
 const cors = require("cors");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
+const puppeteerExtra = require("puppeteer-extra");
+const stealthPlugin = require("puppeteer-extra-plugin-stealth");
 const chromium = require("@sparticuz/chromium");
 
-
-chromium.setHeadlessMode = true;
-chromium.setGraphicsMode = false;
 
 const app = express();
 const PORT = process.env.PORT | 3000;
@@ -126,11 +103,14 @@ app.get("/scrape", async (req, res) => {
     return res.status(400).json({ error: "Missing 'q' parameter in the URL." });
   }
 
+  console.log(searchQuery);
+
   const browser = await puppeteer.launch({
     args: chromium.args,
     defaultViewport: chromium.defaultViewport,
     executablePath: await chromium.executablePath(),
     headless: chromium.headless,
+    ignoreHTTPSErrors: true,
   });
   const page = await browser.newPage();
 
