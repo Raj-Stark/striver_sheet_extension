@@ -15,7 +15,10 @@ app.get("/scrape", async (req, res) => {
     return res.status(400).json({ error: "Missing 'q' parameter in the URL." });
   }
 
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    executablePath: '/path/to/chrome',
+    headless:true,
+  });
   const page = await browser.newPage();
 
   try {
